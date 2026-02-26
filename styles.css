@@ -212,6 +212,31 @@ textarea[readonly] {
   object-fit: cover;
 }
 
+.micro-chip {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.status-low {
+  border-color: #fdb022;
+  background: #fffaeb;
+  color: #7a2e0e;
+}
+
+.status-ok {
+  border-color: #84ca7a;
+  background: #ecfdf3;
+  color: #055b3f;
+}
+
+.status-high {
+  border-color: #fda29b;
+  background: #fef3f2;
+  color: #912018;
+}
+
 .hidden {
   display: none;
 }

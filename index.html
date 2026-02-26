@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NutriTwin — Web MVP v1</title>
+  <title>NutriTwin — Web MVP v1.6</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <header class="topbar">
       <div>
         <h1>NutriTwin</h1>
-        <p class="subtitle">Web MVP v1 · Executive Nutrition Snapshot</p>
+        <p class="subtitle">Web MVP v1.6 · Executive Nutrition Snapshot</p>
       </div>
       <div class="top-actions">
         <button id="loadSampleBtn" class="btn btn-secondary">Load Sample Dataset</button>
@@ -88,6 +88,20 @@
             </select>
           </label>
 
+          <label>
+            Portion Helper (Hand/Teller)
+            <select id="portionRef" name="portionRef">
+              <option value="normal" selected>Standard</option>
+              <option value="hand_palm">🖐️ 1 Handfläche</option>
+              <option value="hand_fist">✊ 1 Faust</option>
+              <option value="hand_two_palms">🙌 2 Handflächen</option>
+              <option value="plate_half">🍽️ Halber Teller</option>
+              <option value="plate_full">🍽️ Voller Teller + Extras</option>
+            </select>
+          </label>
+
+          <div class="full small muted" id="portionGuideHint">Guide: Normal plate → factor 1x</div>
+
           <label class="full">
             Foto hochladen oder direkt aufnehmen
             <input id="mealImageFile" name="mealImageFile" type="file" accept="image/*" capture="environment" />
@@ -131,6 +145,14 @@
       <section class="card">
         <h2>Daily Summary</h2>
         <div id="summary" class="summary-grid"></div>
+        <div class="stack-sm">
+          <h3 class="small">Mikronährstoff-Schätzung (Tag)</h3>
+          <div id="microSummary" class="inline" style="flex-wrap:wrap"></div>
+        </div>
+        <div class="stack-sm">
+          <h3 class="small">Frequent Meals (1-Tap)</h3>
+          <div id="frequentMeals" class="inline" style="flex-wrap:wrap"></div>
+        </div>
       </section>
 
       <section class="card full-width">
