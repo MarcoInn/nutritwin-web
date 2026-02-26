@@ -89,9 +89,23 @@
           </label>
 
           <label class="full">
-            Bild hochladen (optional)
-            <input id="mealImageFile" name="mealImageFile" type="file" accept="image/*" />
+            Foto hochladen oder direkt aufnehmen
+            <input id="mealImageFile" name="mealImageFile" type="file" accept="image/*" capture="environment" />
           </label>
+
+          <div class="full inline">
+            <button id="openCameraBtn" type="button" class="btn btn-secondary">📷 Direkt Foto aufnehmen</button>
+            <span class="small muted">Am Handy öffnet sich die Kamera</span>
+          </div>
+
+          <div id="cameraBox" class="full image-tools hidden">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+            <div class="inline">
+              <button id="capturePhotoBtn" type="button" class="btn">Foto verwenden</button>
+              <button id="closeCameraBtn" type="button" class="btn btn-secondary">Kamera schließen</button>
+            </div>
+          </div>
 
           <div id="imageTools" class="full image-tools hidden">
             <img id="mealImagePreview" alt="Meal Preview" />

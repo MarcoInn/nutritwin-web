@@ -200,13 +200,16 @@ textarea[readonly] {
   background: #fbfdff;
 }
 
-.image-tools img {
-  max-width: 220px;
-  max-height: 220px;
+.image-tools img,
+#cameraVideo {
+  width: 100%;
+  max-width: 320px;
+  max-height: 320px;
   border-radius: 8px;
   border: 1px solid var(--border);
   display: block;
   margin-bottom: 8px;
+  object-fit: cover;
 }
 
 .hidden {
