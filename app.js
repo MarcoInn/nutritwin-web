@@ -16,6 +16,7 @@ const el = {
   mealForm: document.getElementById("mealForm"),
   resetFormBtn: document.getElementById("resetFormBtn"),
   summary: document.getElementById("summary"),
+  frequentMeals: document.getElementById("frequentMeals"),
   reportView: document.getElementById("reportView"),
   exportMarkdownBtn: document.getElementById("exportMarkdownBtn"),
   markdownOutput: document.getElementById("markdownOutput"),
@@ -67,6 +68,32 @@ function renderUsers(){ el.userSelect.innerHTML=""; if(!state.users.length){cons
 
 function renderSummary(){ const t=sumDaily(mealsForSelectedDay()); const cards=[{label:"Calories",value:`${Math.round(t.kcal)} kcal`},{label:"Protein",value:`${t.protein.toFixed(1)} g`},{label:"Carbs",value:`${t.carbs.toFixed(1)} g`},{label:"Fat",value:`${t.fat.toFixed(1)} g`}]; el.summary.innerHTML=cards.map(c=>`<article class="metric"><div class="label">${c.label}</div><div class="value">${c.value}</div></article>`).join(""); }
 
+function renderFrequentMeals(){
+  const user = currentUser();
+  if (!user || !user.meals?.length) {
+    el.frequentMeals.innerHTML = '<span class="small muted">Noch keine gespeicherten Mahlzeiten.</span>';
+    return;
+  }
+  const counts = {};
+  user.meals.forEach((m) => {
+    const key = (m.mealName || "").trim();
+    if (!key) return;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  el.frequentMeals.innerHTML = top.map(([name]) => `<button type="button" class="btn btn-secondary small" data-quickmeal="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join(" ");
+  el.frequentMeals.querySelectorAll("[data-quickmeal]").forEach((btn)=>{
+    btn.addEventListener("click", ()=>{
+      el.mealForm.mealName.value = btn.getAttribute("data-quickmeal");
+      if(!el.mealForm.mealDateTime.value){
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        el.mealForm.mealDateTime.value = now.toISOString().slice(0,16);
+      }
+    });
+  });
+}
+
 function renderReportView(){ const u=currentUser(); const meals=mealsForSelectedDay(); if(!u||!meals.length){el.reportView.innerHTML='<p class="muted">No entries for selected day yet.</p>'; return;} el.reportView.innerHTML=meals.map(meal=>{const time=new Date(meal.mealDateTime).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); return `<article class="report-item"><h4>${escapeHtml(meal.mealName)} <span class="small muted">(${time})</span></h4><div class="small">${escapeHtml(meal.description||"No notes")}</div><div class="small muted">kcal ${toNumber(meal.kcal)} · P ${toNumber(meal.protein)}g · C ${toNumber(meal.carbs)}g · F ${toNumber(meal.fat)}g</div>${meal.imagePath?`<div class="small muted">Image ref: ${escapeHtml(meal.imagePath)}</div>`:""}</article>`;}).join(""); }
 
 function buildMarkdownReport(){ const u=currentUser(); const meals=mealsForSelectedDay(); if(!u) return "# NutriTwin Daily Report\n\n_No user selected._"; const t=sumDaily(meals); const lines=[`# NutriTwin Daily Report`,``,`- **User:** ${u.name}`,`- **Date:** ${state.selectedDate}`,`- **Meals logged:** ${meals.length}` ,``,`## Daily Summary`,``,`- **Calories:** ${Math.round(t.kcal)} kcal`,`- **Protein:** ${t.protein.toFixed(1)} g`,`- **Carbs:** ${t.carbs.toFixed(1)} g`,`- **Fat:** ${t.fat.toFixed(1)} g`,``,`## Meals`,``]; if(!meals.length){lines.push('_No meals logged for this date._'); return lines.join('\n');} meals.forEach((m,i)=>{lines.push(`### ${i+1}. ${m.mealName}`); lines.push(`- Time: ${m.mealDateTime.replace('T',' ')}`); lines.push(`- Description: ${m.description||'-'}`); lines.push(`- Macros: ${toNumber(m.kcal)} kcal | P ${toNumber(m.protein)} g | C ${toNumber(m.carbs)} g | F ${toNumber(m.fat)} g`); if(m.imagePath) lines.push(`- Image ref: ${m.imagePath}`); lines.push('');}); return lines.join('\n'); }
@@ -87,8 +114,9 @@ function fillFormFromEstimate(estimate,predictions){ const f=el.mealForm; if(!es
   const factor=getPortionFactor();
   const kcal=Math.round(estimate.kcal*factor), protein=+(estimate.protein*factor).toFixed(1), carbs=+(estimate.carbs*factor).toFixed(1), fat=+(estimate.fat*factor).toFixed(1);
   f.mealName.value=estimate.mealName; f.description.value=`Auto-Vorschlag aus Foto: ${predictions[0].className}`; f.kcal.value=kcal; f.protein.value=protein; f.carbs.value=carbs; f.fat.value=fat;
-  const confPct=(estimate.confidence*100).toFixed(0), trust=confidenceLabel(estimate.confidence);
-  el.visionSuggestions.textContent=`Auto-Vorschlag: ${estimate.mealName} · ${kcal} kcal · P ${protein} / C ${carbs} / F ${fat} | Portion ${factor}x | Confidence ${confPct}% (${trust}) | Mikro-Hinweis: ${estimate.micros}. Bitte kurz validieren.`;
+  const conf=estimate.confidence, confPct=(conf*100).toFixed(0), trust=confidenceLabel(conf);
+  const trustNote = trust === "LOW" ? "Niedrige Sicherheit: bitte Meal-Name und Makros manuell gegenchecken." : "Bitte kurz validieren.";
+  el.visionSuggestions.textContent=`Auto-Vorschlag: ${estimate.mealName} · ${kcal} kcal · P ${protein} / C ${carbs} / F ${fat} | Portion ${factor}x | Confidence ${confPct}% (${trust}) | Mikro-Hinweis: ${estimate.micros}. ${trustNote}`;
 }
 
 async function analyzeCurrentImage(){ if(!state.imageDataUrl){ setVisionStatus('Bitte zuerst ein Bild wählen',true); return;} try{ await ensureVisionReady(); setVisionStatus('Analysiere Foto …'); const preds=await state.vision.model.classify(el.mealImagePreview); state.vision.lastPredictions=preds; fillFormFromEstimate(mapPredictionToNutrition(preds),preds); setVisionStatus('Analyse fertig'); } catch { setVisionStatus('Analyse fehlgeschlagen',true);} }
@@ -99,7 +127,7 @@ function resetImageTools(){ state.imageDataUrl=''; state.vision.lastPredictions=
 
 function loadSampleDataset(){ const d=new Date().toISOString().slice(0,10); const u={id:uid('user'),name:'Sample Executive',createdAt:new Date().toISOString(),meals:[{id:uid('meal'),mealName:'Breakfast Power Bowl',mealDateTime:`${d}T08:00`,description:'Greek yogurt, berries, oats',kcal:420,protein:32,carbs:44,fat:12,imagePath:'images/breakfast_bowl.jpg',createdAt:new Date().toISOString()},{id:uid('meal'),mealName:'Lunch Lean Plate',mealDateTime:`${d}T13:00`,description:'Grilled chicken, quinoa, greens',kcal:610,protein:48,carbs:52,fat:18,imagePath:'images/lunch_plate.jpg',createdAt:new Date().toISOString()},{id:uid('meal'),mealName:'Dinner Recovery',mealDateTime:`${d}T19:30`,description:'Salmon, sweet potato, broccoli',kcal:690,protein:50,carbs:46,fat:30,imagePath:'',createdAt:new Date().toISOString()}]}; state.users=[u]; state.selectedUserId=u.id; state.selectedDate=d; saveState(); renderAll(); }
 
-function renderAll(){ renderUsers(); el.reportDate.value=state.selectedDate; renderSummary(); renderReportView(); el.markdownOutput.value=buildMarkdownReport(); }
+function renderAll(){ renderUsers(); el.reportDate.value=state.selectedDate; renderSummary(); renderFrequentMeals(); renderReportView(); el.markdownOutput.value=buildMarkdownReport(); }
 
 function bindEvents(){
   el.createUserBtn.addEventListener('click',()=>{createUser(el.newUserName.value); el.newUserName.value=''; el.newUserName.focus();});
