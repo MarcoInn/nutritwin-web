@@ -1,4 +1,4 @@
-const STORAGE_KEY = "nutritwin_mvp_v1_6";
+const STORAGE_KEY = "nutritwin_mvp_v1_7";
 
 const MICRO_TARGETS = {
   fiber: { low: 18, high: 35, unit: "g", label: "Fiber" },
@@ -59,6 +59,9 @@ const el = {
 
 const FOOD_MAP = [
   { keywords: ["banana", "plantain"], mealName: "Banane", kcal: 105, protein: 1.3, carbs: 27, fat: 0.3, profile: "fruit" },
+  { keywords: ["berry", "berries", "strawberry", "blueberry"], mealName: "Beeren", kcal: 70, protein: 1.0, carbs: 16, fat: 0.4, profile: "fruit" },
+  { keywords: ["yogurt", "yoghurt", "greek"], mealName: "Yogurt", kcal: 150, protein: 11, carbs: 11, fat: 6, profile: "balanced_bowl" },
+  { keywords: ["nut", "almond", "walnut", "cashew", "granola"], mealName: "Nuss Topping", kcal: 180, protein: 5, carbs: 7, fat: 15, profile: "balanced_bowl" },
   { keywords: ["apple"], mealName: "Apfel", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3, profile: "fruit" },
   { keywords: ["orange", "mandarin", "citrus"], mealName: "Orange", kcal: 80, protein: 1.2, carbs: 18, fat: 0.2, profile: "fruit" },
   { keywords: ["pizza"], mealName: "Pizza", kcal: 850, protein: 32, carbs: 95, fat: 38, profile: "ultra_processed" },
@@ -325,6 +328,7 @@ function renderReportView() {
           <div class="small">${escapeHtml(meal.description || "No notes")}</div>
           <div class="small muted">kcal ${toNumber(meal.kcal)} · P ${toNumber(meal.protein)}g · C ${toNumber(meal.carbs)}g · F ${toNumber(meal.fat)}g</div>
           <div class="small muted">Micro profile: ${escapeHtml(micro.note || "-")} · Fiber ${micro.fiber}g · Mg ${micro.magnesium}mg · Fe ${micro.iron}mg · VitC ${micro.vitaminC}mg · O3 ${micro.omega3}g</div>
+          ${meal.autoComponents?.length ? `<div class="small muted">Blend: ${meal.autoComponents.map((c) => `${escapeHtml(c.mealName)} ${(c.confidence * 100).toFixed(0)}%`).join(" · ")}</div>` : ""}
           ${meal.imagePath ? `<div class="small muted">Image ref: ${escapeHtml(meal.imagePath)}</div>` : ""}
         </article>
       `;
@@ -381,6 +385,7 @@ function buildMarkdownReport() {
     lines.push(`- Macros: ${toNumber(meal.kcal)} kcal | P ${toNumber(meal.protein)} g | C ${toNumber(meal.carbs)} g | F ${toNumber(meal.fat)} g`);
     lines.push(`- Micro profile: ${micro.note || "-"}`);
     lines.push(`- Micros: Fiber ${micro.fiber}g | Mg ${micro.magnesium}mg | Fe ${micro.iron}mg | VitC ${micro.vitaminC}mg | O3 ${micro.omega3}g`);
+    if (meal.autoComponents?.length) lines.push(`- Blend components: ${meal.autoComponents.map((c) => `${c.mealName} ${(c.confidence * 100).toFixed(0)}%`).join(" | ")}`);
     if (meal.imagePath) lines.push(`- Image ref: ${meal.imagePath}`);
     lines.push("");
   });
@@ -409,6 +414,7 @@ function createUser(name) {
 function setVisionStatus(msg, isError = false) {
   el.visionStatus.textContent = msg;
   el.visionStatus.style.color = isError ? "#b42318" : "";
+  el.visionStatus.style.fontWeight = isError ? "700" : "500";
 }
 
 function stopCameraStream() {
@@ -478,9 +484,45 @@ function mapPredictionToNutrition(predictions = []) {
   }
 
   if (!matches.length) return null;
-  matches.sort((a, b) => b.score - a.score);
-  const top = matches[0];
-  return { ...top, confidence: Math.min(1, top.score) };
+
+  const top3 = matches.sort((a, b) => b.score - a.score).slice(0, 3);
+  const totalScore = top3.reduce((acc, m) => acc + m.score, 0) || 1;
+  const weighted = top3.map((m) => ({ ...m, weight: m.score / totalScore }));
+
+  const blended = weighted.reduce(
+    (acc, m) => {
+      acc.kcal += m.kcal * m.weight;
+      acc.protein += m.protein * m.weight;
+      acc.carbs += m.carbs * m.weight;
+      acc.fat += m.fat * m.weight;
+      return acc;
+    },
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const primary = weighted[0];
+  const profileScore = {};
+  weighted.forEach((w) => {
+    profileScore[w.profile] = (profileScore[w.profile] || 0) + w.weight;
+  });
+  const blendedProfile = Object.entries(profileScore).sort((a, b) => b[1] - a[1])[0]?.[0] || primary.profile;
+
+  const blendName = weighted.map((w) => w.mealName).join(" + ");
+  return {
+    mealName: weighted.length > 1 ? blendName : primary.mealName,
+    kcal: Math.round(blended.kcal),
+    protein: +blended.protein.toFixed(1),
+    carbs: +blended.carbs.toFixed(1),
+    fat: +blended.fat.toFixed(1),
+    profile: blendedProfile,
+    confidence: Math.min(1, totalScore / 1.4),
+    components: weighted.map((w) => ({
+      mealName: w.mealName,
+      profile: w.profile,
+      confidence: +w.weight.toFixed(2),
+      score: +w.score.toFixed(3),
+    })),
+  };
 }
 
 function confidenceLabel(score) {
@@ -514,7 +556,7 @@ function applyCorrection(mealName, macros) {
 
 function fillFormFromEstimate(estimate, predictions) {
   if (!estimate) {
-    el.visionSuggestions.textContent = `Kein klarer Food-Match. Top-Klassen: ${predictions.slice(0, 3).map((p) => `${p.className} (${(p.probability * 100).toFixed(0)}%)`).join(", ")}. Bitte Werte kurz ergänzen.`;
+    el.visionSuggestions.textContent = `No clear food match. Top classes: ${predictions.slice(0, 3).map((p) => `${p.className} (${(p.probability * 100).toFixed(0)}%)`).join(", ")}. Please quickly adjust values.`;
     return;
   }
 
@@ -529,7 +571,7 @@ function fillFormFromEstimate(estimate, predictions) {
   const learned = applyCorrection(estimate.mealName, macros);
   const f = el.mealForm;
   f.mealName.value = learned.mealName;
-  f.description.value = `Auto-Vorschlag aus Foto: ${predictions[0].className}`;
+  f.description.value = `Auto photo blend: ${predictions[0]?.className || "unknown"}`;
   f.kcal.value = learned.kcal;
   f.protein.value = learned.protein;
   f.carbs.value = learned.carbs;
@@ -538,7 +580,11 @@ function fillFormFromEstimate(estimate, predictions) {
   const confPct = (estimate.confidence * 100).toFixed(0);
   const trust = confidenceLabel(estimate.confidence);
   const learningNote = learned.correctionUsed ? ` | Learned tweak: ${learned.note}` : "";
-  el.visionSuggestions.textContent = `Auto-Vorschlag: ${learned.mealName} · ${learned.kcal} kcal · P ${learned.protein} / C ${learned.carbs} / F ${learned.fat} | Portion ${factor}x | Confidence ${confPct}% (${trust}) | Micro profile ${estimate.profile}${learningNote}`;
+  const components = (estimate.components || [])
+    .map((c) => `${c.mealName} ${(c.confidence * 100).toFixed(0)}%`)
+    .join(" · ");
+
+  el.visionSuggestions.textContent = `Blend suggestion: ${learned.mealName} · ${learned.kcal} kcal · P ${learned.protein} / C ${learned.carbs} / F ${learned.fat} | Portion ${factor}x | Confidence ${confPct}% (${trust}) | Components: ${components}${learningNote}`;
 
   state.lastAutoSuggestion = {
     mealName: estimate.mealName,
@@ -549,6 +595,7 @@ function fillFormFromEstimate(estimate, predictions) {
     fat: learned.fat,
     profile: estimate.profile,
     portionFactor: factor,
+    components: estimate.components || [],
   };
 }
 
@@ -615,6 +662,7 @@ function addMealFromForm(formData) {
     fat: formData.get("fat") || 0,
     imagePath: (formData.get("imagePath") || "").toString().trim() || state.imageDataUrl,
     createdAt: new Date().toISOString(),
+    autoComponents: state.lastAutoSuggestion?.components || [],
   };
 
   if (!meal.mealName || !meal.mealDateTime) return alert("Meal name and date/time are required.");

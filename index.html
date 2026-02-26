@@ -3,15 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NutriTwin — Web MVP v1.6</title>
+  <title>NutriTwin — Web v1.7</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
   <div class="app-shell">
-    <header class="topbar">
+    <header class="topbar glass">
       <div>
-        <h1>NutriTwin</h1>
-        <p class="subtitle">Web MVP v1.6 · Executive Nutrition Snapshot</p>
+        <div class="title-row">
+          <h1>NutriTwin</h1>
+          <span class="status-pill">Web v1.7</span>
+        </div>
+        <p class="subtitle">Smart meal capture · blended component nutrition estimate · mobile-first dashboard</p>
       </div>
       <div class="top-actions">
         <button id="loadSampleBtn" class="btn btn-secondary">Load Sample Dataset</button>
@@ -19,8 +28,8 @@
     </header>
 
     <main class="layout">
-      <section class="card">
-        <h2>User</h2>
+      <section class="card glass">
+        <h2>Profile & Date</h2>
         <div class="stack-sm">
           <label for="newUserName">Create test user</label>
           <div class="inline">
@@ -40,7 +49,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card glass">
         <h2>Add Meal Entry</h2>
         <form id="mealForm" class="grid-form">
           <label>
@@ -79,53 +88,53 @@
           </label>
 
           <label>
-            Portionsfaktor
+            Portion factor
             <select id="portionFactor" name="portionFactor">
-              <option value="0.75">Klein (0.75x)</option>
+              <option value="0.75">Small (0.75x)</option>
               <option value="1" selected>Normal (1.0x)</option>
-              <option value="1.25">Groß (1.25x)</option>
-              <option value="1.5">Sehr groß (1.5x)</option>
+              <option value="1.25">Large (1.25x)</option>
+              <option value="1.5">Extra large (1.5x)</option>
             </select>
           </label>
 
           <label>
-            Portion Helper (Hand/Teller)
+            Portion Helper (Hand/Plate)
             <select id="portionRef" name="portionRef">
               <option value="normal" selected>Standard</option>
-              <option value="hand_palm">🖐️ 1 Handfläche</option>
-              <option value="hand_fist">✊ 1 Faust</option>
-              <option value="hand_two_palms">🙌 2 Handflächen</option>
-              <option value="plate_half">🍽️ Halber Teller</option>
-              <option value="plate_full">🍽️ Voller Teller + Extras</option>
+              <option value="hand_palm">🖐️ 1 Palm</option>
+              <option value="hand_fist">✊ 1 Fist</option>
+              <option value="hand_two_palms">🙌 2 Palms</option>
+              <option value="plate_half">🍽️ Half plate</option>
+              <option value="plate_full">🍽️ Full plate + extras</option>
             </select>
           </label>
 
           <div class="full small muted" id="portionGuideHint">Guide: Normal plate → factor 1x</div>
 
           <label class="full">
-            Foto hochladen oder direkt aufnehmen
+            Upload photo or capture directly
             <input id="mealImageFile" name="mealImageFile" type="file" accept="image/*" capture="environment" />
           </label>
 
           <div class="full inline">
-            <button id="openCameraBtn" type="button" class="btn btn-secondary">📷 Direkt Foto aufnehmen</button>
-            <span class="small muted">Am Handy öffnet sich die Kamera</span>
+            <button id="openCameraBtn" type="button" class="btn btn-secondary">📷 Open camera</button>
+            <span class="small muted">On phone, this opens the rear camera.</span>
           </div>
 
           <div id="cameraBox" class="full image-tools hidden">
             <video id="cameraVideo" autoplay playsinline></video>
             <canvas id="cameraCanvas" class="hidden"></canvas>
             <div class="inline">
-              <button id="capturePhotoBtn" type="button" class="btn">Foto verwenden</button>
-              <button id="closeCameraBtn" type="button" class="btn btn-secondary">Kamera schließen</button>
+              <button id="capturePhotoBtn" type="button" class="btn">Use photo</button>
+              <button id="closeCameraBtn" type="button" class="btn btn-secondary">Close camera</button>
             </div>
           </div>
 
           <div id="imageTools" class="full image-tools hidden">
             <img id="mealImagePreview" alt="Meal Preview" />
             <div class="inline">
-              <button id="analyzeImageBtn" type="button" class="btn btn-secondary">Foto analysieren</button>
-              <span id="visionStatus" class="muted small">Noch nicht analysiert</span>
+              <button id="analyzeImageBtn" type="button" class="btn btn-secondary">Analyze photo</button>
+              <span id="visionStatus" class="muted small">Not analyzed yet</span>
             </div>
             <div id="visionSuggestions" class="small muted"></div>
           </div>
@@ -136,26 +145,26 @@
           </label>
 
           <div class="full inline">
-            <button type="submit" class="btn">Save Meal</button>
+            <button type="submit" class="btn">Save meal</button>
             <button id="resetFormBtn" type="button" class="btn btn-secondary">Reset</button>
           </div>
         </form>
       </section>
 
-      <section class="card">
+      <section class="card glass">
         <h2>Daily Summary</h2>
         <div id="summary" class="summary-grid"></div>
         <div class="stack-sm">
-          <h3 class="small">Mikronährstoff-Schätzung (Tag)</h3>
-          <div id="microSummary" class="inline" style="flex-wrap:wrap"></div>
+          <h3 class="small section-mini">Micronutrient estimate</h3>
+          <div id="microSummary" class="inline chips-wrap"></div>
         </div>
         <div class="stack-sm">
-          <h3 class="small">Frequent Meals (1-Tap)</h3>
-          <div id="frequentMeals" class="inline" style="flex-wrap:wrap"></div>
+          <h3 class="small section-mini">Frequent meals (1-tap)</h3>
+          <div id="frequentMeals" class="inline chips-wrap"></div>
         </div>
       </section>
 
-      <section class="card full-width">
+      <section class="card glass full-width">
         <div class="section-head">
           <h2>Daily Report</h2>
           <button id="exportMarkdownBtn" class="btn">Export Markdown</button>
@@ -163,15 +172,11 @@
 
         <div id="reportView" class="report-view"></div>
 
-        <label for="markdownOutput">Copy-ready Markdown</label>
+        <label for="markdownOutput">Copy-ready markdown</label>
         <textarea id="markdownOutput" rows="12" readonly placeholder="Generated report markdown appears here..."></textarea>
       </section>
     </main>
   </div>
-
-  <template id="emptyStateTpl">
-    <p class="muted">No entries for selected day yet.</p>
-  </template>
 
   <script src="app.js"></script>
 </body>

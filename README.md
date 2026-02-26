@@ -1,4 +1,4 @@
-# NutriTwin Web MVP v1.6
+# NutriTwin Web v1.7
 
 ## Start
 ```bash
@@ -7,40 +7,45 @@ python3 -m http.server 8000
 ```
 Then open: `http://<VPS-IP>:8000`
 
-## What changed in v1.6
+## v1.7 Highlights
 
-### 1) Portion-estimation helper (mobile friendly)
-- New **Hand/Plate selector** (`portionRef`) with practical references:
-  - 1 palm, 1 fist, 2 palms
-  - half plate, full plate + extras
-- Selector auto-adjusts **portion factor** and gives clear guidance text.
-- Works fast on phone without extra steps.
+### 1) Multi-component meal recognition (top-3 blend)
+- Vision suggestion now blends the **top 3 matched food components** (instead of single-class winner).
+- Better detection for mixed meals (e.g. fruit + yogurt + nuts bowl).
+- Suggestion text now shows component split with confidence percentage.
 
-### 2) Better micronutrient estimation + target indicator
-- Introduced clearer **per-meal micro profile mapping** (`green_plate`, `fish_plate`, `red_meat`, etc.).
-- Meal cards now show profile note + micro estimate values.
-- Daily micro dashboard now includes **LOW / OK / HIGH** status chips for:
-  - Fiber
-  - Magnesium
-  - Iron
-  - Vitamin C
-  - Omega-3
-- Markdown export now includes micro target status.
+### 2) Confidence-weighted macro estimate
+- Calories + macros are computed with a **confidence-weighted blend** of matched components.
+- Portion factor is still applied after model estimate for practical mobile usage.
+- Correction-learning remains compatible: user edits continue to refine future auto-suggestions.
 
-### 3) Correction-learning mechanism (high impact)
-- App now remembers user corrections to auto-suggestions:
-  - If user edits auto-estimated kcal/macros/meal name, correction factors are saved.
-- On next suggestion for same meal name, app reuses latest correction to improve auto-fill.
-- Frequent meal tap also benefits from learned portion defaults.
+### 3) Modern premium mobile-first UI refresh
+- Redesigned from sterile panel to polished dashboard with:
+  - improved hierarchy and spacing
+  - stronger typography
+  - soft gradients, glass cards, subtle shadows
+  - cleaner chips and action buttons
+- Keeps lightweight performance (plain HTML/CSS/JS, no heavy UI framework).
 
-## Quick test flow (phone)
+### 4) Existing functionality retained
+- direct camera capture
+- upload fallback
+- portion helper
+- micro summary chips
+- frequent meals quick tap
+- markdown export
+
+## Short changelog
+- **v1.7**: Multi-component blended vision logic, confidence-weighted macro estimation, premium UI redesign, blend components shown in report and markdown export.
+- **v1.6**: Portion helper + micro target chips + correction learning.
+
+## Quick phone test flow
 1. Create/select user.
-2. Choose a portion helper (e.g. **1 palm** or **full plate**).
-3. Upload/take photo → click **Foto analysieren**.
-4. Adjust values if needed and save.
-5. Re-analyze similar meal: check if learned correction is applied.
-6. Review **Daily Summary** micro status chips and export markdown.
+2. Capture a mixed meal photo (e.g. yogurt + fruit + nuts) and run **Analyze photo**.
+3. Check blend suggestion components + confidence values.
+4. Adjust macros and save; re-test a similar meal to confirm correction-learning behavior.
+5. Review daily summary chips and export markdown.
 
 ## Notes
-- This remains a heuristic MVP. It is optimized for practical speed + better consistency, not clinical nutrition.
-- Learning is local (browser localStorage) per user profile.
+- MVP remains heuristic and practical, not clinical nutrition software.
+- Learning is local (`localStorage`) per browser profile.
