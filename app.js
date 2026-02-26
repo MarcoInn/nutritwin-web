@@ -58,6 +58,9 @@ const el = {
 };
 
 const FOOD_MAP = [
+  { keywords: ["banana", "plantain"], mealName: "Banane", kcal: 105, protein: 1.3, carbs: 27, fat: 0.3, profile: "fruit" },
+  { keywords: ["apple"], mealName: "Apfel", kcal: 95, protein: 0.5, carbs: 25, fat: 0.3, profile: "fruit" },
+  { keywords: ["orange", "mandarin", "citrus"], mealName: "Orange", kcal: 80, protein: 1.2, carbs: 18, fat: 0.2, profile: "fruit" },
   { keywords: ["pizza"], mealName: "Pizza", kcal: 850, protein: 32, carbs: 95, fat: 38, profile: "ultra_processed" },
   { keywords: ["burger", "cheeseburger"], mealName: "Burger", kcal: 780, protein: 35, carbs: 55, fat: 45, profile: "red_meat" },
   { keywords: ["salad", "caesar", "greens"], mealName: "Salat", kcal: 420, protein: 20, carbs: 22, fat: 26, profile: "green_plate" },
@@ -81,6 +84,7 @@ const MICRO_PROFILES = {
   balanced_bowl: { fiber: 7.5, magnesium: 92, iron: 2.2, vitaminC: 24, omega3: 0.3, note: "Balanced one-bowl meal" },
   egg_plate: { fiber: 2.2, magnesium: 34, iron: 1.6, vitaminC: 6, omega3: 0.12, note: "Egg-based meal" },
   ultra_processed: { fiber: 2.5, magnesium: 28, iron: 1.6, vitaminC: 4, omega3: 0.04, note: "Low micro density" },
+  fruit: { fiber: 3.2, magnesium: 32, iron: 0.4, vitaminC: 12, omega3: 0.02, note: "Fruit profile" },
   fallback: { fiber: 3, magnesium: 42, iron: 1.3, vitaminC: 8, omega3: 0.12, note: "Generic profile" },
 };
 
